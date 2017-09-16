@@ -11,7 +11,7 @@ NDK_TOOLCHAIN_VERSION := clang
 
 # Build both all native supported architectures... 
 # BUT, we will make a runtime decision to use the vision module.
-APP_ABI := all
+APP_ABI := armeabi-v7a arm64-v8a x86 x86_64
 APP_CFLAGS += -O3
 
 ## DEBUG
