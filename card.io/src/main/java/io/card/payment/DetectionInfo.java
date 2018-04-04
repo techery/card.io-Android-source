@@ -31,8 +31,6 @@ class DetectionInfo {
         detectedCard = new CreditCard();
     }
 
-    ;
-
     boolean sameEdgesAs(DetectionInfo other) {
         return other.topEdge == this.topEdge && other.bottomEdge == this.bottomEdge
                 && other.leftEdge == this.leftEdge && other.rightEdge == this.rightEdge;

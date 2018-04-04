@@ -74,12 +74,6 @@
             android:layout_height="wrap_content"
             android:text="Detect card-ish rectangle only"/>
 
-        <CheckBox
-            android:id="@+id/keep_application_theme"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Keep application theme"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,11 +140,6 @@
 
         <TextView
             android:id="@+id/result"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <ImageView
-            android:id="@+id/result_card_type_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

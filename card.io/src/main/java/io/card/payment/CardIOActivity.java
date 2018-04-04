@@ -763,10 +763,6 @@ public final class CardIOActivity extends Activity {
                 mOverlay.setGuideColor(Color.GREEN);
             }
 
-            mOverlay.setUseCardIOLogo(false);
-            mOverlay.setHideCardIOLogo(true);
-            mOverlay.setShowTorch(false);
-
             String scanInstructions = getIntent().getStringExtra(EXTRA_SCAN_INSTRUCTIONS);
             if (scanInstructions != null) {
                 mOverlay.setScanInstructions(scanInstructions);

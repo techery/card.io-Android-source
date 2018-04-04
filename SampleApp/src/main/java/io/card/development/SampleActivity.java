@@ -46,11 +46,9 @@ public class SampleActivity extends Activity {
 
     private TextView mResultLabel;
     private ImageView mResultImage;
-    private ImageView mResultCardTypeImage;
 
     private boolean autotestMode;
     private int numAutotestsPassed;
-    private CheckBox mKeepApplicationThemeToggle;
     private Spinner mLanguageSpinner;
     private EditText mUnblurEdit;
 
@@ -67,14 +65,11 @@ public class SampleActivity extends Activity {
         mCardholderNameToggle = (CheckBox) findViewById(R.id.gather_cardholder_name);
         mSuppressScanToggle = (CheckBox) findViewById(R.id.detect_only);
 
-        mKeepApplicationThemeToggle = (CheckBox) findViewById(R.id.keep_application_theme);
-
         mLanguageSpinner = (Spinner) findViewById(R.id.language);
         mUnblurEdit = (EditText) findViewById(R.id.unblur);
 
         mResultLabel = (TextView) findViewById(R.id.result);
         mResultImage = (ImageView) findViewById(R.id.result_image);
-        mResultCardTypeImage = (ImageView) findViewById(R.id.result_card_type_image);
 
         TextView version = (TextView) findViewById(R.id.version);
         version.setText("card.io library: " + CardIOActivity.sdkVersion() + "\n" +
@@ -101,7 +96,6 @@ public class SampleActivity extends Activity {
                 .putExtra(CardIOActivity.EXTRA_RESTRICT_POSTAL_CODE_TO_NUMERIC_ONLY, mPostalCodeNumericOnlyToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, mCardholderNameToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_LANGUAGE_OR_LOCALE, (String) mLanguageSpinner.getSelectedItem())
-                .putExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, mKeepApplicationThemeToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_GUIDE_COLOR, Color.GREEN)
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_RETURN_CARD_IMAGE, true);
@@ -143,7 +137,6 @@ public class SampleActivity extends Activity {
         Log.v(TAG, "onActivityResult(" + requestCode + ", " + resultCode + ", " + data + ")");
 
         String outStr = new String();
-        Bitmap cardTypeImage = null;
 
         if ((requestCode == REQUEST_SCAN || requestCode == REQUEST_AUTOTEST) && data != null
                 && data.hasExtra(CardIOActivity.EXTRA_SCAN_RESULT)) {
@@ -152,7 +145,6 @@ public class SampleActivity extends Activity {
                 outStr += "Card number: " + result.getRedactedCardNumber() + "\n";
 
                 CardType cardType = result.getCardType();
-                cardTypeImage = cardType.imageBitmap(this);
                 outStr += "Card type: " + cardType.name() + " cardType.getDisplayName(null)="
                         + cardType.getDisplayName(null) + "\n";
 
@@ -188,7 +180,6 @@ public class SampleActivity extends Activity {
 
         Bitmap card = CardIOActivity.getCapturedCardImage(data);
         mResultImage.setImageBitmap(card);
-        mResultCardTypeImage.setImageBitmap(cardTypeImage);
 
         Log.i(TAG, "Set result: " + outStr);
 

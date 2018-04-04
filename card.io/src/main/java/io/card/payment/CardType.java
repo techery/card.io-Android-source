@@ -166,53 +166,6 @@ public enum CardType {
     }
 
     /**
-     * Returns the {@link Bitmap} of the card logo (e.g. Visa, MC, etc.), if known. Otherwise, returns null.
-     * <br><br>
-     * Returned bitmap is suitable for display with a masked card number, for example, to indicate a user's chosen
-     * card.
-     *
-     * @param context The application context for retrieving the image density
-     * @return the bitmap icon of the card for display
-     */
-    public Bitmap imageBitmap(Context context) {
-        int cardImageResource = -1;
-        switch (this) {
-            case AMEX: {
-                cardImageResource = R.drawable.cio_ic_amex;
-                break;
-            }
-            case VISA: {
-                cardImageResource = R.drawable.cio_ic_visa;
-                break;
-            }
-            case MASTERCARD: {
-                cardImageResource = R.drawable.cio_ic_mastercard;
-                break;
-            }
-            case DISCOVER:
-            case DINERSCLUB: {
-                cardImageResource = R.drawable.cio_ic_discover;
-                break;
-            }
-            case JCB: {
-                cardImageResource = R.drawable.cio_ic_jcb;
-                break;
-            }
-            default: {
-                // do not use generic image by default, if it's not one of the above, it's not
-                // valid, or it's maestro
-                break;
-            }
-        }
-
-        if (cardImageResource != -1) {
-            return BitmapFactory.decodeResource(context.getResources(), cardImageResource);
-        }
-
-        return null;
-    }
-
-    /**
      * Determine if a number matches a prefix interval
      *
      * @param number credit card number
