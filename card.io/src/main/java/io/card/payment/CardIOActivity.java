@@ -764,29 +764,35 @@ public final class CardIOActivity extends Activity {
         mCardScanner.triggerAutoFocus(true);
     }
 
-    /**
-     * Manually set up the layout for this {@link android.app.Activity}. It may be possible to use the standard xml
-     * layout mechanism instead, but to know for sure would require more work
-     */
     private void setPreviewLayout() {
+        setContentView(R.layout.cio_activity_card_io);
+        initPreviewView();
+        initOverlayView();
+        initManualEntryButton();
+    }
 
-        // top level container
-        FrameLayout mainLayout = new FrameLayout(this);
-        mainLayout.setBackgroundColor(Color.BLACK);
-        mainLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT));
+    private void initManualEntryButton() {
+        // Show the keyboard button
+        TextView manualEntryButton = (TextView) findViewById(R.id.manual_entry_button);
+        if (suppressManualEntry) {
+            manualEntryButton.setVisibility(View.GONE);
+        } else {
+            manualEntryButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(v.getContext(), "Click", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
 
-        FrameLayout previewFrame = new FrameLayout(this);
-
-        mPreview = new Preview(this, null);
+    private void initPreviewView() {
+        mPreview = (Preview) findViewById(R.id.preview_view);
         mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
-        mPreview.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT, Gravity.TOP));
-        previewFrame.addView(mPreview);
+    }
 
-        mOverlay = new OverlayView(this, null);
-        mOverlay.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT));
+    private void initOverlayView() {
+        mOverlay = (OverlayView) findViewById(R.id.overlay_view);
         if (getIntent() != null) {
 
             int color = getIntent().getIntExtra(EXTRA_GUIDE_COLOR, 0);
@@ -809,17 +815,6 @@ public final class CardIOActivity extends Activity {
                 mOverlay.setScanInstructions(scanInstructions);
             }
         }
-
-        previewFrame.addView(mOverlay);
-
-        mainLayout.addView(previewFrame, new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-
-        // Show the keyboard button
-        if (!suppressManualEntry) {
-        }
-
-        this.setContentView(mainLayout);
     }
 
     private void setResultAndFinish(final int resultCode, final Intent data) {
