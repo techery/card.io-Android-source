@@ -75,18 +75,6 @@
             android:text="Force keyboard entry (bypass scan)"/>
 
         <CheckBox
-            android:id="@+id/suppress_manual"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Suppress keyboard number entry"/>
-
-        <CheckBox
-            android:id="@+id/suppress_confirmation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Suppress confirmation"/>
-
-        <CheckBox
             android:id="@+id/detect_only"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -43,8 +43,6 @@ public class SampleActivity extends Activity {
     private CheckBox mPostalCodeToggle;
     private CheckBox mPostalCodeNumericOnlyToggle;
     private CheckBox mCardholderNameToggle;
-    private CheckBox mSuppressManualToggle;
-    private CheckBox mSuppressConfirmationToggle;
     private CheckBox mSuppressScanToggle;
 
     private TextView mResultLabel;
@@ -71,8 +69,6 @@ public class SampleActivity extends Activity {
         mPostalCodeToggle = (CheckBox) findViewById(R.id.gather_postal_code);
         mPostalCodeNumericOnlyToggle = (CheckBox) findViewById(R.id.postal_code_numeric_only);
         mCardholderNameToggle = (CheckBox) findViewById(R.id.gather_cardholder_name);
-        mSuppressManualToggle = (CheckBox) findViewById(R.id.suppress_manual);
-        mSuppressConfirmationToggle = (CheckBox) findViewById(R.id.suppress_confirmation);
         mSuppressScanToggle = (CheckBox) findViewById(R.id.detect_only);
 
         mUseCardIOLogoToggle = (CheckBox) findViewById(R.id.use_card_io_logo);
@@ -111,13 +107,11 @@ public class SampleActivity extends Activity {
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_POSTAL_CODE, mPostalCodeToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_RESTRICT_POSTAL_CODE_TO_NUMERIC_ONLY, mPostalCodeNumericOnlyToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, mCardholderNameToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_SUPPRESS_MANUAL_ENTRY, mSuppressManualToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_USE_CARDIO_LOGO, mUseCardIOLogoToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_LANGUAGE_OR_LOCALE, (String) mLanguageSpinner.getSelectedItem())
                 .putExtra(CardIOActivity.EXTRA_USE_PAYPAL_ACTIONBAR_ICON, mShowPayPalActionBarIconToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, mKeepApplicationThemeToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_GUIDE_COLOR, Color.GREEN)
-                .putExtra(CardIOActivity.EXTRA_SUPPRESS_CONFIRMATION, mSuppressConfirmationToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_RETURN_CARD_IMAGE, true);
 

@@ -121,11 +121,6 @@ public final class CardIOActivity extends Activity {
     public static final String EXTRA_SCAN_RESULT = "io.card.payment.scanResult";
 
     /**
-     * Boolean extra indicating card was not scanned.
-     */
-    private static final String EXTRA_MANUAL_ENTRY_RESULT = "io.card.payment.manualEntryScanResult";
-
-    /**
      * Boolean extra. Optional. Defaults to <code>false</code>. Removes the keyboard button from the
      * scan screen.
      * <br><br>
@@ -162,12 +157,6 @@ public final class CardIOActivity extends Activity {
      * camera.
      */
     public static final String EXTRA_GUIDE_COLOR = "io.card.payment.guideColor";
-
-    /**
-     * Boolean extra. Optional. If this value is set to <code>true</code> the user will not be prompted to
-     * confirm their card number after processing.
-     */
-    public static final String EXTRA_SUPPRESS_CONFIRMATION = "io.card.payment.suppressConfirmation";
 
     /**
      * Boolean extra. Optional. Defaults to <code>false</code>. When set to <code>true</code> the card.io logo
@@ -240,9 +229,7 @@ public final class CardIOActivity extends Activity {
     public static final int RESULT_ENTRY_CANCELED = lastResult++;
 
     /**
-     * result code indicating that scan is not available. Only returned when
-     * {@link #EXTRA_SUPPRESS_MANUAL_ENTRY} is set and scanning is not available.
-     * <br><br>
+     * result code indicating that scan is not available.
      * This error can be avoided in normal situations by checking
      * {@link #canReadCardWithCamera()}.
      */
@@ -279,7 +266,6 @@ public final class CardIOActivity extends Activity {
 
     private static final int TOAST_OFFSET_Y = -75;
 
-    private static final int DATA_ENTRY_REQUEST_ID = 10;
     private static final int PERMISSION_REQUEST_ID = 11;
 
     private OverlayView mOverlay;
@@ -406,9 +392,7 @@ public final class CardIOActivity extends Activity {
     }
 
     private void finishIfSuppressManualEntry() {
-        if (suppressManualEntry) {
-            setResultAndFinish(RESULT_SCAN_NOT_AVAILABLE, null);
-        }
+        setResultAndFinish(RESULT_SCAN_NOT_AVAILABLE, null);
     }
 
     private void checkCamera() {
@@ -544,13 +528,8 @@ public final class CardIOActivity extends Activity {
 
         if (!waitingForPermission) {
             if (manualEntryFallbackOrForced) {
-                if (suppressManualEntry) {
-                    finishIfSuppressManualEntry();
-                    return;
-                } else {
-                    nextActivity();
-                    return;
-                }
+                finishIfSuppressManualEntry();
+                return;
             }
 
             Util.logNativeMemoryStats();
@@ -623,22 +602,6 @@ public final class CardIOActivity extends Activity {
             } else {
                 // show manual entry - handled in onResume()
                 manualEntryFallbackOrForced = true;
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == DATA_ENTRY_REQUEST_ID) {
-            if (resultCode == RESULT_CARD_INFO || resultCode == RESULT_ENTRY_CANCELED
-                    || manualEntryFallbackOrForced) {
-                setResultAndFinish(resultCode, data);
-            } else {
-                if (mUIBar != null) {
-                    mUIBar.setVisibility(View.VISIBLE);
-                }
             }
         }
     }
@@ -782,55 +745,15 @@ public final class CardIOActivity extends Activity {
     }
 
     private void nextActivity() {
-        final Intent origIntent = getIntent();
-        if (origIntent != null && origIntent.getBooleanExtra(EXTRA_SUPPRESS_CONFIRMATION, false)) {
-            Intent dataIntent = new Intent(CardIOActivity.this, DataEntryActivity.class);
-            if (mDetectedCard != null) {
-                dataIntent.putExtra(EXTRA_SCAN_RESULT, mDetectedCard);
-                mDetectedCard = null;
-            }
-
-            Util.writeCapturedCardImageIfNecessary(origIntent, dataIntent, mOverlay);
-
-            setResultAndFinish(RESULT_CONFIRMATION_SUPPRESSED, dataIntent);
-        } else {
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-
-                    Intent dataIntent = new Intent(CardIOActivity.this, DataEntryActivity.class);
-                    Util.writeCapturedCardImageIfNecessary(origIntent, dataIntent, mOverlay);
-
-                    if (mOverlay != null) {
-                        mOverlay.markupCard();
-                        if (markedCardImage != null && !markedCardImage.isRecycled()) {
-                            markedCardImage.recycle();
-                        }
-                        markedCardImage = mOverlay.getCardImage();
-                    }
-                    if (mDetectedCard != null) {
-                        dataIntent.putExtra(EXTRA_SCAN_RESULT, mDetectedCard);
-                        mDetectedCard = null;
-                    } else {
-                        /*
-                         add extra to indicate manual entry.
-                         This can obviously be indicated by the presence of EXTRA_SCAN_RESULT.
-                         The purpose of this is to ensure there's always an extra in the DataEntryActivity.
-                         If there are no extras received by DataEntryActivity, then an error has occurred.
-                         */
-                        dataIntent.putExtra(EXTRA_MANUAL_ENTRY_RESULT, true);
-                    }
-
-                    dataIntent.putExtras(getIntent()); // passing on any received params (such as isCvv
-                    // and language)
-                    dataIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-                            | Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                    startActivityForResult(dataIntent, DATA_ENTRY_REQUEST_ID);
-                }
-            });
+        Intent dataIntent = new Intent();
+        if (mDetectedCard != null) {
+            dataIntent.putExtra(EXTRA_SCAN_RESULT, mDetectedCard);
+            mDetectedCard = null;
         }
+
+        Util.writeCapturedCardImageIfNecessary(getIntent(), dataIntent, mOverlay);
+
+        setResultAndFinish(RESULT_CONFIRMATION_SUPPRESSED, dataIntent);
     }
 
 
@@ -957,33 +880,9 @@ public final class CardIOActivity extends Activity {
 
         // Show the keyboard button
         if (!suppressManualEntry) {
-            Button keyboardBtn = new Button(this);
-            keyboardBtn.setId(KEY_BTN_ID);
-            keyboardBtn.setText(LocalizedStrings.getString(StringKey.KEYBOARD));
-            keyboardBtn.setOnClickListener(new Button.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    nextActivity();
-                }
-            });
-            mUIBar.addView(keyboardBtn);
-            ViewUtil.styleAsButton(keyboardBtn, false, this, useApplicationTheme);
-            if(!useApplicationTheme){
-                keyboardBtn.setTextSize(Appearance.TEXT_SIZE_SMALL_BUTTON);
-            }
-            keyboardBtn.setMinimumHeight(ViewUtil.typedDimensionValueToPixelsInt(
-                    Appearance.SMALL_BUTTON_HEIGHT, this));
-            RelativeLayout.LayoutParams keyboardParams = (RelativeLayout.LayoutParams) keyboardBtn
-                    .getLayoutParams();
-            keyboardParams.width = LayoutParams.WRAP_CONTENT;
-            keyboardParams.height = LayoutParams.WRAP_CONTENT;
-            keyboardParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            ViewUtil.setPadding(keyboardBtn, Appearance.CONTAINER_MARGIN_HORIZONTAL, null,
-                    Appearance.CONTAINER_MARGIN_HORIZONTAL, null);
-            ViewUtil.setMargins(keyboardBtn, Appearance.BASE_SPACING, Appearance.BASE_SPACING,
-                    Appearance.BASE_SPACING, Appearance.BASE_SPACING);
-
+            // TODO Show the button
         }
+
         // Device has a flash, show the flash button
         RelativeLayout.LayoutParams uiParams = new RelativeLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
