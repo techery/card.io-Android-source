@@ -20,23 +20,14 @@ import android.graphics.Rect;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,8 +38,6 @@ import java.util.Date;
 import io.card.payment.i18n.LocalizedStrings;
 import io.card.payment.i18n.StringKey;
 import io.card.payment.ui.ActivityHelper;
-import io.card.payment.ui.Appearance;
-import io.card.payment.ui.ViewUtil;
 
 /**
  * This is the entry point {@link android.app.Activity} for a card.io client to use <a
@@ -175,19 +164,6 @@ public final class CardIOActivity extends Activity {
     public static final String EXTRA_RETURN_CARD_IMAGE = "io.card.payment.returnCardImage";
 
     /**
-     * Boolean extra. Optional. Use the PayPal icon in the ActionBar.
-     */
-    public static final String EXTRA_USE_PAYPAL_ACTIONBAR_ICON =
-            "io.card.payment.intentSenderIsPayPal";
-
-    /**
-     * Boolean extra. Optional. If this value is set to <code>true</code>, and the application has a theme,
-     * the theme for the card.io {@link android.app.Activity}s will be set to the theme of the application.
-     */
-    public static final String EXTRA_KEEP_APPLICATION_THEME = "io.card.payment.keepApplicationTheme";
-
-
-    /**
      * Boolean extra. Used for testing only.
      */
     static final String PRIVATE_EXTRA_CAMERA_BYPASS_TEST_MODE = "io.card.payment.cameraBypassTestMode";
@@ -253,22 +229,9 @@ public final class CardIOActivity extends Activity {
     private boolean mDetectOnly;
     private boolean waitingForPermission;
 
-    private boolean useApplicationTheme;
-
     private CardScanner mCardScanner;
 
     private boolean manualEntryFallbackOrForced = false;
-
-    /**
-     * Static variable for the decorated card image. This is ugly, but works. Parceling and
-     * unparceling card image data to pass to the next {@link android.app.Activity} does not work because the image
-     * data
-     * is too big and causes a somewhat misleading exception. Compressing the image data yields a
-     * reduction to 30% of the original size, but still gives the same exception. An alternative
-     * would be to persist the image data in a file. That seems like a pretty horrible idea, as we
-     * would be persisting very sensitive data on the device.
-     */
-    static Bitmap markedCardImage = null;
 
     // ------------------------------------------------------------------------
     // ACTIVITY LIFECYCLE
@@ -280,9 +243,6 @@ public final class CardIOActivity extends Activity {
 
         final Intent clientData = this.getIntent();
 
-        useApplicationTheme = getIntent().getBooleanExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, false);
-        ActivityHelper.setActivityTheme(this, useApplicationTheme);
-
         LocalizedStrings.setLanguage(clientData);
 
         // Validate app's manifest is correct.
@@ -290,8 +250,6 @@ public final class CardIOActivity extends Activity {
 
         ResolveInfo resolveInfo;
         String errorMsg;
-
-        // Check for DataEntryActivity's portrait orientation
 
         // Check for CardIOActivity's orientation config in manifest
         resolveInfo = getPackageManager().resolveActivity(clientData,
@@ -303,7 +261,6 @@ public final class CardIOActivity extends Activity {
         }
 
         suppressManualEntry = clientData.getBooleanExtra(EXTRA_SUPPRESS_MANUAL_ENTRY, false);
-
 
         if (savedInstanceState != null) {
             waitingForPermission = savedInstanceState.getBoolean(BUNDLE_WAITING_FOR_PERMISSION);
@@ -819,7 +776,6 @@ public final class CardIOActivity extends Activity {
 
     private void setResultAndFinish(final int resultCode, final Intent data) {
         setResult(resultCode, data);
-        markedCardImage = null;
         finish();
     }
 
