@@ -109,14 +109,13 @@ class OverlayView extends View {
     private final Torch mTorch;
     private final Logo mLogo;
     private Rect mTorchRect, mLogoRect;
-    private final boolean mShowTorch;
+    private boolean mShowTorch;
     private int mRotationFlip;
     private float mScale = 1;
 
-    public OverlayView(CardIOActivity captureActivity, AttributeSet attributeSet, boolean showTorch) {
+    public OverlayView(CardIOActivity captureActivity, AttributeSet attributeSet) {
         super(captureActivity, attributeSet);
 
-        mShowTorch = showTorch;
         mScanActivityRef = new WeakReference<CardIOActivity>(captureActivity);
 
         mRotationFlip = 1;
@@ -475,6 +474,10 @@ class OverlayView extends View {
 
     public void setCameraPreviewRect(Rect rect) {
         mCameraPreviewRect = rect;
+    }
+
+    public void setShowTorch(boolean showTorch) {
+        mShowTorch = showTorch;
     }
 
     public void setTorchOn(boolean b) {

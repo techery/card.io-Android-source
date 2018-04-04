@@ -36,7 +36,6 @@ public class SampleActivity extends Activity {
     private static final int REQUEST_SCAN = 100;
     private static final int REQUEST_AUTOTEST = 200;
 
-    private CheckBox mManualToggle;
     private CheckBox mEnableExpiryToggle;
     private CheckBox mScanExpiryToggle;
     private CheckBox mCvvToggle;
@@ -51,8 +50,6 @@ public class SampleActivity extends Activity {
 
     private boolean autotestMode;
     private int numAutotestsPassed;
-    private CheckBox mUseCardIOLogoToggle;
-    private CheckBox mShowPayPalActionBarIconToggle;
     private CheckBox mKeepApplicationThemeToggle;
     private Spinner mLanguageSpinner;
     private EditText mUnblurEdit;
@@ -62,7 +59,6 @@ public class SampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sample_activity);
 
-        mManualToggle = (CheckBox) findViewById(R.id.force_manual);
         mEnableExpiryToggle = (CheckBox) findViewById(R.id.gather_expiry);
         mScanExpiryToggle = (CheckBox) findViewById(R.id.scan_expiry);
         mCvvToggle = (CheckBox) findViewById(R.id.gather_cvv);
@@ -71,8 +67,6 @@ public class SampleActivity extends Activity {
         mCardholderNameToggle = (CheckBox) findViewById(R.id.gather_cardholder_name);
         mSuppressScanToggle = (CheckBox) findViewById(R.id.detect_only);
 
-        mUseCardIOLogoToggle = (CheckBox) findViewById(R.id.use_card_io_logo);
-        mShowPayPalActionBarIconToggle = (CheckBox) findViewById(R.id.show_paypal_action_bar_icon);
         mKeepApplicationThemeToggle = (CheckBox) findViewById(R.id.keep_application_theme);
 
         mLanguageSpinner = (Spinner) findViewById(R.id.language);
@@ -100,16 +94,13 @@ public class SampleActivity extends Activity {
 
     public void onScan(View pressed) {
         Intent intent = new Intent(this, CardIOActivity.class)
-                .putExtra(CardIOActivity.EXTRA_NO_CAMERA, mManualToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, mEnableExpiryToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_SCAN_EXPIRY, mScanExpiryToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_CVV, mCvvToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_POSTAL_CODE, mPostalCodeToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_RESTRICT_POSTAL_CODE_TO_NUMERIC_ONLY, mPostalCodeNumericOnlyToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, mCardholderNameToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_USE_CARDIO_LOGO, mUseCardIOLogoToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_LANGUAGE_OR_LOCALE, (String) mLanguageSpinner.getSelectedItem())
-                .putExtra(CardIOActivity.EXTRA_USE_PAYPAL_ACTIONBAR_ICON, mShowPayPalActionBarIconToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, mKeepApplicationThemeToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_GUIDE_COLOR, Color.GREEN)
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())

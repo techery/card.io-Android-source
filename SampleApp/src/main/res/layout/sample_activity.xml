@@ -69,28 +69,10 @@
             android:checked="true"/>
 
         <CheckBox
-            android:id="@+id/force_manual"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Force keyboard entry (bypass scan)"/>
-
-        <CheckBox
             android:id="@+id/detect_only"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Detect card-ish rectangle only"/>
-
-        <CheckBox
-            android:id="@+id/use_card_io_logo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Use card.io logo"/>
-
-        <CheckBox
-            android:id="@+id/show_paypal_action_bar_icon"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="PayPal icon in action bar"/>
 
         <CheckBox
             android:id="@+id/keep_application_theme"

@@ -37,6 +37,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
@@ -56,11 +57,6 @@ import io.card.payment.ui.ViewUtil;
  * @version 1.0
  */
 public final class CardIOActivity extends Activity {
-    /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the card will not be scanned
-     * with the camera.
-     */
-    public static final String EXTRA_NO_CAMERA = "io.card.payment.noCamera";
 
     /**
      * Boolean extra. Optional. Defaults to <code>false</code>. If
@@ -108,12 +104,6 @@ public final class CardIOActivity extends Activity {
     public static final String EXTRA_REQUIRE_CARDHOLDER_NAME = "io.card.payment.requireCardholderName";
 
     /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the card.io logo will be
-     * shown instead of the PayPal logo.
-     */
-    public static final String EXTRA_USE_CARDIO_LOGO = "io.card.payment.useCardIOLogo";
-
-    /**
      * Parcelable extra containing {@link CreditCard}. The data intent returned to your {@link android.app.Activity}'s
      * {@link Activity#onActivityResult(int, int, Intent)} will contain this extra if the resultCode is
      * {@link #RESULT_CARD_INFO}.
@@ -159,12 +149,6 @@ public final class CardIOActivity extends Activity {
     public static final String EXTRA_GUIDE_COLOR = "io.card.payment.guideColor";
 
     /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. When set to <code>true</code> the card.io logo
-     * will not be shown overlaid on the camera.
-     */
-    public static final String EXTRA_HIDE_CARDIO_LOGO = "io.card.payment.hideLogo";
-
-    /**
      * String extra. Optional. Used to display instructions to the user while they are scanning
      * their card.
      */
@@ -189,13 +173,6 @@ public final class CardIOActivity extends Activity {
      * {@link #EXTRA_CAPTURED_CARD_IMAGE} key.
      */
     public static final String EXTRA_RETURN_CARD_IMAGE = "io.card.payment.returnCardImage";
-
-    /**
-     * Integer extra. Optional. If this value is provided the view will be inflated and will overlay
-     * the camera during the scan process. The integer value must be the id of a valid layout
-     * resource.
-     */
-    public static final String EXTRA_SCAN_OVERLAY_LAYOUT_ID = "io.card.payment.scanOverlayLayoutId";
 
     /**
      * Boolean extra. Optional. Use the PayPal icon in the ActionBar.
@@ -254,13 +231,7 @@ public final class CardIOActivity extends Activity {
     private static final int ORIENTATION_LANDSCAPE_RIGHT = 3;
     private static final int ORIENTATION_LANDSCAPE_LEFT = 4;
 
-    private static final int FRAME_ID = 1;
-    private static final int UIBAR_ID = 2;
-    private static final int KEY_BTN_ID = 3;
-
     private static final String BUNDLE_WAITING_FOR_PERMISSION = "io.card.payment.waitingForPermission";
-
-    private static final float UIBAR_VERTICAL_MARGIN_DP = 15.0f;
 
     private static final long[] VIBRATE_PATTERN = { 0, 70, 10, 40 };
 
@@ -280,11 +251,8 @@ public final class CardIOActivity extends Activity {
     private int mFrameOrientation;
     private boolean suppressManualEntry;
     private boolean mDetectOnly;
-    private LinearLayout customOverlayLayout;
     private boolean waitingForPermission;
 
-    private RelativeLayout mUIBar;
-    private FrameLayout mMainLayout;
     private boolean useApplicationTheme;
 
     private CardScanner mCardScanner;
@@ -341,9 +309,7 @@ public final class CardIOActivity extends Activity {
             waitingForPermission = savedInstanceState.getBoolean(BUNDLE_WAITING_FOR_PERMISSION);
         }
 
-        if (clientData.getBooleanExtra(EXTRA_NO_CAMERA, false)) {
-            manualEntryFallbackOrForced = true;
-        } else if (!CardScanner.processorSupported()){
+        if (!CardScanner.processorSupported()){
             manualEntryFallbackOrForced = true;
         } else {
             try {
@@ -508,13 +474,6 @@ public final class CardIOActivity extends Activity {
         if (degrees >= 0 && degrees != mLastDegrees) {
             mCardScanner.setDeviceOrientation(mFrameOrientation);
             setDeviceDegrees(degrees);
-            if (degrees == 90) {
-                rotateCustomOverlay(270);
-            } else if (degrees == 270) {
-                rotateCustomOverlay(90);
-            } else {
-                rotateCustomOverlay(degrees);
-            }
         }
     }
 
@@ -712,7 +671,6 @@ public final class CardIOActivity extends Activity {
         }
 
         mCardScanner.pauseScanning();
-        mUIBar.setVisibility(View.INVISIBLE);
 
         if (dInfo.predicted()) {
             mDetectedCard = dInfo.creditCard();
@@ -769,12 +727,7 @@ public final class CardIOActivity extends Activity {
     private boolean restartPreview() {
         mDetectedCard = null;
         assert mPreview != null;
-        boolean success = mCardScanner.resumeScanning(mPreview.getSurfaceHolder());
-        if (success) {
-            mUIBar.setVisibility(View.VISIBLE);
-        }
-
-        return success;
+        return mCardScanner.resumeScanning(mPreview.getSurfaceHolder());
     }
 
     private void setDeviceDegrees(int degrees) {
@@ -818,25 +771,23 @@ public final class CardIOActivity extends Activity {
     private void setPreviewLayout() {
 
         // top level container
-        mMainLayout = new FrameLayout(this);
-        mMainLayout.setBackgroundColor(Color.BLACK);
-        mMainLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+        FrameLayout mainLayout = new FrameLayout(this);
+        mainLayout.setBackgroundColor(Color.BLACK);
+        mainLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT));
 
         FrameLayout previewFrame = new FrameLayout(this);
-        previewFrame.setId(FRAME_ID);
 
-        mPreview = new Preview(this, null, mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
+        mPreview = new Preview(this, null);
+        mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
         mPreview.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT, Gravity.TOP));
         previewFrame.addView(mPreview);
 
-        mOverlay = new OverlayView(this, null, Util.deviceSupportsTorch(this));
+        mOverlay = new OverlayView(this, null);
         mOverlay.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT));
         if (getIntent() != null) {
-            boolean useCardIOLogo = getIntent().getBooleanExtra(EXTRA_USE_CARDIO_LOGO, false);
-            mOverlay.setUseCardIOLogo(useCardIOLogo);
 
             int color = getIntent().getIntExtra(EXTRA_GUIDE_COLOR, 0);
 
@@ -849,83 +800,26 @@ public final class CardIOActivity extends Activity {
                 mOverlay.setGuideColor(Color.GREEN);
             }
 
-            boolean hideCardIOLogo = getIntent().getBooleanExtra(EXTRA_HIDE_CARDIO_LOGO, false);
-            mOverlay.setHideCardIOLogo(hideCardIOLogo);
+            mOverlay.setUseCardIOLogo(false);
+            mOverlay.setHideCardIOLogo(true);
+            mOverlay.setShowTorch(false);
 
             String scanInstructions = getIntent().getStringExtra(EXTRA_SCAN_INSTRUCTIONS);
             if (scanInstructions != null) {
                 mOverlay.setScanInstructions(scanInstructions);
             }
-
         }
 
         previewFrame.addView(mOverlay);
 
-        RelativeLayout.LayoutParams previewParams = new RelativeLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        previewParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        previewParams.addRule(RelativeLayout.ABOVE, UIBAR_ID);
-        mMainLayout.addView(previewFrame, previewParams);
-
-        mUIBar = new RelativeLayout(this);
-        mUIBar.setGravity(Gravity.BOTTOM);
-        RelativeLayout.LayoutParams mUIBarParams = new RelativeLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        previewParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        mUIBar.setLayoutParams(mUIBarParams);
-
-        mUIBar.setId(UIBAR_ID);
-
-        mUIBar.setGravity(Gravity.BOTTOM | Gravity.RIGHT);
+        mainLayout.addView(previewFrame, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         // Show the keyboard button
         if (!suppressManualEntry) {
-            // TODO Show the button
         }
 
-        // Device has a flash, show the flash button
-        RelativeLayout.LayoutParams uiParams = new RelativeLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        uiParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        final float scale = getResources().getDisplayMetrics().density;
-        int uiBarMarginPx = (int) (UIBAR_VERTICAL_MARGIN_DP * scale + 0.5f);
-        uiParams.setMargins(0, uiBarMarginPx, 0, uiBarMarginPx);
-        mMainLayout.addView(mUIBar, uiParams);
-
-        if (getIntent() != null) {
-            if (customOverlayLayout != null) {
-                mMainLayout.removeView(customOverlayLayout);
-                customOverlayLayout = null;
-            }
-
-            int resourceId = getIntent().getIntExtra(EXTRA_SCAN_OVERLAY_LAYOUT_ID, -1);
-            if (resourceId != -1) {
-                customOverlayLayout = new LinearLayout(this);
-                customOverlayLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT));
-
-                LayoutInflater inflater = this.getLayoutInflater();
-
-                inflater.inflate(resourceId, customOverlayLayout);
-                mMainLayout.addView(customOverlayLayout);
-            }
-        }
-
-        this.setContentView(mMainLayout);
-    }
-
-    private void rotateCustomOverlay(float degrees) {
-        if (customOverlayLayout != null) {
-            float pivotX = customOverlayLayout.getWidth() / 2;
-            float pivotY = customOverlayLayout.getHeight() / 2;
-
-            Animation an = new RotateAnimation(0, degrees, pivotX, pivotY);
-            an.setDuration(0);
-            an.setRepeatCount(0);
-            an.setFillAfter(true);
-
-            customOverlayLayout.setAnimation(an);
-        }
+        this.setContentView(mainLayout);
     }
 
     private void setResultAndFinish(final int resultCode, final Intent data) {
