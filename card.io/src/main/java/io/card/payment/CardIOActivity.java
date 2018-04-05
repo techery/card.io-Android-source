@@ -110,18 +110,6 @@ public final class CardIOActivity extends Activity {
     public static final String EXTRA_LANGUAGE_OR_LOCALE = "io.card.payment.languageOrLocale";
 
     /**
-     * Integer extra. Optional. Defaults to {@link Color#GREEN}. Changes the color of the guide overlay on the
-     * camera.
-     */
-    public static final String EXTRA_GUIDE_COLOR = "io.card.payment.guideColor";
-
-    /**
-     * String extra. Optional. Used to display instructions to the user while they are scanning
-     * their card.
-     */
-    public static final String EXTRA_SCAN_INSTRUCTIONS = "io.card.payment.scanInstructions";
-
-    /**
      * Boolean extra. Optional. Once a card image has been captured but before it has been
      * processed, this value will determine whether to continue processing as usual. If the value is
      * <code>true</code> the {@link CardIOActivity} will finish with a {@link #RESULT_SCAN_SUPPRESSED} result code.
@@ -700,8 +688,9 @@ public final class CardIOActivity extends Activity {
         UIConfig uiConfig = getUiConfig();
         ViewGroup viewGroup = (ViewGroup) LayoutInflater.from(this)
                 .inflate(uiConfig.getLayoutId(), null, false);
-        initPreviewView(uiConfig.getPreviewView(viewGroup));
-        initOverlayView(uiConfig.getOverlayView(viewGroup));
+        mPreview = uiConfig.getPreviewView(viewGroup);
+        mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
+        mOverlay = uiConfig.getOverlayView(viewGroup);
         initManualEntryButton(uiConfig.getManualEntryButton(viewGroup));
         setContentView(viewGroup);
     }
@@ -730,33 +719,6 @@ public final class CardIOActivity extends Activity {
                     setResultAndFinish(RESULT_SCAN_CANCELED, new Intent());
                 }
             });
-        }
-    }
-
-    private void initPreviewView(Preview preview) {
-        mPreview = preview;
-        mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
-    }
-
-    private void initOverlayView(OverlayView overlayView) {
-        mOverlay = overlayView;
-        if (getIntent() != null) {
-
-            int color = getIntent().getIntExtra(EXTRA_GUIDE_COLOR, 0);
-
-            if (color != 0) {
-                // force 100% opaque guide colors.
-                int alphaRemovedColor = color | 0xFF000000;
-                mOverlay.setGuideColor(alphaRemovedColor);
-            } else {
-                // default to greeeeeen
-                mOverlay.setGuideColor(Color.GREEN);
-            }
-
-            String scanInstructions = getIntent().getStringExtra(EXTRA_SCAN_INSTRUCTIONS);
-            if (scanInstructions != null) {
-                mOverlay.setScanInstructions(scanInstructions);
-            }
         }
     }
 

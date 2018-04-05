@@ -5,6 +5,7 @@ package io.card.payment;
  */
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,6 +20,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -110,6 +112,14 @@ public class OverlayView extends View {
 
     public OverlayView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
+        TypedArray attrs = context.obtainStyledAttributes(attributeSet, R.styleable.CioOverlayView);
+        int guideColor = attrs.getColor(R.styleable.CioOverlayView_cio_guide_color, Color.GREEN);
+        setGuideColor(guideColor);
+        String scanInstructions = attrs.getString(R.styleable.CioOverlayView_cio_scan_instructions);
+        if (!TextUtils.isEmpty(scanInstructions)) {
+            setScanInstructions(scanInstructions);
+        }
+        attrs.recycle();
 
         mScanActivityRef = new WeakReference<>((CardIOActivity)context);
 
