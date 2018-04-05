@@ -31,35 +31,7 @@
                 android:text="Expiry"
                 android:onClick="onExpiryToggle"/>
 
-            <CheckBox
-                android:id="@+id/gather_cvv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="false"
-                android:text="CVV"/>
-
-            <CheckBox
-                android:id="@+id/gather_postal_code"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="false"
-                android:text="Postal Code"/>
-
         </LinearLayout>
-
-        <CheckBox
-            android:id="@+id/gather_cardholder_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Cardholder Name"/>
-
-        <CheckBox
-            android:id="@+id/postal_code_numeric_only"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Restrict Postal Code to Numeric Only"/>
 
         <CheckBox
             android:id="@+id/scan_expiry"

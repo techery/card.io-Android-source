@@ -38,10 +38,6 @@ public class SampleActivity extends Activity {
 
     private CheckBox mEnableExpiryToggle;
     private CheckBox mScanExpiryToggle;
-    private CheckBox mCvvToggle;
-    private CheckBox mPostalCodeToggle;
-    private CheckBox mPostalCodeNumericOnlyToggle;
-    private CheckBox mCardholderNameToggle;
     private CheckBox mSuppressScanToggle;
 
     private TextView mResultLabel;
@@ -59,10 +55,6 @@ public class SampleActivity extends Activity {
 
         mEnableExpiryToggle = (CheckBox) findViewById(R.id.gather_expiry);
         mScanExpiryToggle = (CheckBox) findViewById(R.id.scan_expiry);
-        mCvvToggle = (CheckBox) findViewById(R.id.gather_cvv);
-        mPostalCodeToggle = (CheckBox) findViewById(R.id.gather_postal_code);
-        mPostalCodeNumericOnlyToggle = (CheckBox) findViewById(R.id.postal_code_numeric_only);
-        mCardholderNameToggle = (CheckBox) findViewById(R.id.gather_cardholder_name);
         mSuppressScanToggle = (CheckBox) findViewById(R.id.detect_only);
 
         mLanguageSpinner = (Spinner) findViewById(R.id.language);
@@ -91,10 +83,6 @@ public class SampleActivity extends Activity {
         Intent intent = new Intent(this, CardIOActivity.class)
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, mEnableExpiryToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_SCAN_EXPIRY, mScanExpiryToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_CVV, mCvvToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_POSTAL_CODE, mPostalCodeToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_RESTRICT_POSTAL_CODE_TO_NUMERIC_ONLY, mPostalCodeNumericOnlyToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, mCardholderNameToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_LANGUAGE_OR_LOCALE, (String) mLanguageSpinner.getSelectedItem())
                 .putExtra(CardIOActivity.EXTRA_GUIDE_COLOR, Color.GREEN)
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())
@@ -115,9 +103,6 @@ public class SampleActivity extends Activity {
 
         Intent intent = new Intent(this, CardIOActivity.class)
                 .putExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, false)
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_CVV, false)
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_POSTAL_CODE, false)
-                .putExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, false)
                 .putExtra("debug_autoAcceptResult", true);
 
         startActivityForResult(intent, REQUEST_AUTOTEST);
@@ -151,18 +136,6 @@ public class SampleActivity extends Activity {
 
                 if (mEnableExpiryToggle.isChecked()) {
                     outStr += "Expiry: " + result.expiryMonth + "/" + result.expiryYear + "\n";
-                }
-
-                if (mCvvToggle.isChecked()) {
-                    outStr += "CVV: " + result.cvv + "\n";
-                }
-
-                if (mPostalCodeToggle.isChecked()) {
-                    outStr += "Postal Code: " + result.postalCode + "\n";
-                }
-
-                if (mCardholderNameToggle.isChecked()) {
-                    outStr += "Cardholder Name: " + result.cardholderName + "\n";
                 }
             }
 

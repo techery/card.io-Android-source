@@ -192,7 +192,6 @@ class CardScanner implements Camera.PreviewCallback, Camera.AutoFocusCallback,
     CardScanner(CardIOActivity scanActivity, int currentFrameOrientation) {
         Intent scanIntent = scanActivity.getIntent();
         if (scanIntent != null) {
-            mSuppressScan = scanIntent.getBooleanExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, false);
             mScanExpiry = scanIntent.getBooleanExtra(CardIOActivity.EXTRA_REQUIRE_EXPIRY, false)
                     && scanIntent.getBooleanExtra(CardIOActivity.EXTRA_SCAN_EXPIRY, true);
             mUnblurDigits = scanIntent.getIntExtra(CardIOActivity.EXTRA_UNBLUR_DIGITS, DEFAULT_UNBLUR_DIGITS);

@@ -30,7 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
@@ -70,31 +69,6 @@ public final class CardIOActivity extends Activity {
      * Setting it to <code>4</code> will blur all digits except the last four.
      */
     public static final String EXTRA_UNBLUR_DIGITS = "io.card.payment.unblurDigits";
-
-    /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the user will be prompted
-     * for the card CVV.
-     */
-    public static final String EXTRA_REQUIRE_CVV = "io.card.payment.requireCVV";
-
-    /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the user will be prompted
-     * for the card billing postal code.
-     */
-    public static final String EXTRA_REQUIRE_POSTAL_CODE = "io.card.payment.requirePostalCode";
-
-    /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the postal code will only collect numeric
-     * input. Set this if you know the <a href="https://en.wikipedia.org/wiki/Postal_code">expected country's
-     * postal code</a> has only numeric postal codes.
-     */
-    public static final String EXTRA_RESTRICT_POSTAL_CODE_TO_NUMERIC_ONLY = "io.card.payment.restrictPostalCodeToNumericOnly";
-
-    /**
-     * Boolean extra. Optional. Defaults to <code>false</code>. If set, the user will be prompted
-     * for the cardholder name.
-     */
-    public static final String EXTRA_REQUIRE_CARDHOLDER_NAME = "io.card.payment.requireCardholderName";
 
     /**
      * Parcelable extra containing {@link CreditCard}. The data intent returned to your {@link android.app.Activity}'s
@@ -462,7 +436,7 @@ public final class CardIOActivity extends Activity {
             if (!restartPreview()) {
                 StringKey error = StringKey.ERROR_CAMERA_UNEXPECTED_FAIL;
                 showErrorMessage(LocalizedStrings.getString(error));
-                nextActivity();
+                setScannedCardToResultAndFinish();
             } else {
                 // Turn flash off
                 setFlashOn(false);
@@ -657,11 +631,11 @@ public final class CardIOActivity extends Activity {
 
             setResultAndFinish(RESULT_SCAN_SUPPRESSED, dataIntent);
         } else {
-            nextActivity();
+            setScannedCardToResultAndFinish();
         }
     }
 
-    private void nextActivity() {
+    private void setScannedCardToResultAndFinish() {
         Intent dataIntent = new Intent();
         if (mDetectedCard != null) {
             dataIntent.putExtra(EXTRA_SCAN_RESULT, mDetectedCard);
