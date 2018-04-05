@@ -20,7 +20,7 @@ import android.view.ViewGroup;
  * by surface view lifecycle callbacks. We only attempt (re-)start camera preview if there is a
  * valid surface view to draw on.
  */
-class Preview extends ViewGroup {
+public class Preview extends ViewGroup {
     private static final String TAG = Preview.class.getSimpleName();
 
     private int mPreviewWidth;

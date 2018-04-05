@@ -98,7 +98,8 @@ public class SampleActivity extends Activity {
                 .putExtra(CardIOActivity.EXTRA_LANGUAGE_OR_LOCALE, (String) mLanguageSpinner.getSelectedItem())
                 .putExtra(CardIOActivity.EXTRA_GUIDE_COLOR, Color.GREEN)
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())
-                .putExtra(CardIOActivity.EXTRA_RETURN_CARD_IMAGE, true);
+                .putExtra(CardIOActivity.EXTRA_RETURN_CARD_IMAGE, true)
+                .putExtra(CardIOActivity.EXTRA_UI_CONFIG, UiConfigImpl.class);
 
         try {
             int unblurDigits = Integer.parseInt(mUnblurEdit.getText().toString());

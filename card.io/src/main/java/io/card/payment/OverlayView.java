@@ -65,7 +65,7 @@ import io.card.payment.i18n.StringKey;
  * independent of screen scale.
  * <p/>
  */
-class OverlayView extends View {
+public class OverlayView extends View {
     private static final String TAG = OverlayView.class.getSimpleName();
 
     private static final float GUIDE_FONT_SIZE = 26.0f;
@@ -83,15 +83,11 @@ class OverlayView extends View {
     private static final int TORCH_WIDTH = 70;
     private static final int TORCH_HEIGHT = 50;
 
-    private static final int LOGO_MAX_WIDTH = 100;
-    private static final int LOGO_MAX_HEIGHT = TORCH_HEIGHT;
-
     private static final int BUTTON_TOUCH_TOLERANCE = 20;
 
     private final WeakReference<CardIOActivity> mScanActivityRef;
     private DetectionInfo mDInfo;
     private Bitmap mBitmap;
-    GradientDrawable mScanLineDrawable;
     private Rect mGuide;
     private CreditCard mDetectedCard;
     private int mRotation;

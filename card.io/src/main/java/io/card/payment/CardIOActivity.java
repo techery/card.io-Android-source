@@ -23,9 +23,11 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -38,6 +40,8 @@ import java.util.Date;
 import io.card.payment.i18n.LocalizedStrings;
 import io.card.payment.i18n.StringKey;
 import io.card.payment.ui.ActivityHelper;
+import io.card.payment.ui.config.UIConfig;
+import io.card.payment.ui.config.DefaultUiConfig;
 
 /**
  * This is the entry point {@link android.app.Activity} for a card.io client to use <a
@@ -163,23 +167,25 @@ public final class CardIOActivity extends Activity {
      */
     public static final String EXTRA_RETURN_CARD_IMAGE = "io.card.payment.returnCardImage";
 
+    public static final String EXTRA_UI_CONFIG = "io.card.payment.ui_config";
+
     /**
      * Boolean extra. Used for testing only.
      */
     static final String PRIVATE_EXTRA_CAMERA_BYPASS_TEST_MODE = "io.card.payment.cameraBypassTestMode";
 
     private static int lastResult = 0xca8d10; // arbitrary. chosen to be well above
-    // Activity.RESULT_FIRST_USER.
+
     /**
      * result code supplied to {@link Activity#onActivityResult(int, int, Intent)} when a scan request completes.
      */
     public static final int RESULT_CARD_INFO = lastResult++;
 
     /**
-     * result code supplied to {@link Activity#onActivityResult(int, int, Intent)} when the user presses the cancel
-     * button.
+     * result code supplied to {@link Activity#onActivityResult(int, int, Intent)}
+     * when the user presses the manual entry button.
      */
-    public static final int RESULT_ENTRY_CANCELED = lastResult++;
+    public static final int RESULT_SCAN_CANCELED = lastResult++;
 
     /**
      * result code indicating that scan is not available.
@@ -192,11 +198,6 @@ public final class CardIOActivity extends Activity {
      * result code indicating that we only captured the card image.
      */
     public static final int RESULT_SCAN_SUPPRESSED = lastResult++;
-
-    /**
-     * result code indicating that confirmation was suppressed.
-     */
-    public static final int RESULT_CONFIRMATION_SUPPRESSED = lastResult++;
 
     private static final String TAG = CardIOActivity.class.getSimpleName();
 
@@ -217,6 +218,7 @@ public final class CardIOActivity extends Activity {
 
     private OverlayView mOverlay;
     private OrientationEventListener orientationListener;
+    private UIConfig uiConfig;
 
     // TODO: the preview is accessed by the scanner. Not the best practice.
     Preview mPreview;
@@ -373,7 +375,7 @@ public final class CardIOActivity extends Activity {
             }
             mCardScanner.prepareScanner();
 
-            setPreviewLayout();
+            initUi();
 
             orientationListener = new OrientationEventListener(this,
                     SensorManager.SENSOR_DELAY_UI) {
@@ -668,9 +670,8 @@ public final class CardIOActivity extends Activity {
 
         Util.writeCapturedCardImageIfNecessary(getIntent(), dataIntent, mOverlay);
 
-        setResultAndFinish(RESULT_CONFIRMATION_SUPPRESSED, dataIntent);
+        setResultAndFinish(RESULT_CARD_INFO, dataIntent);
     }
-
 
     /**
      * Show an error message using toast.
@@ -721,35 +722,50 @@ public final class CardIOActivity extends Activity {
         mCardScanner.triggerAutoFocus(true);
     }
 
-    private void setPreviewLayout() {
-        setContentView(R.layout.cio_activity_card_io);
-        initPreviewView();
-        initOverlayView();
-        initManualEntryButton();
+    private void initUi() {
+        UIConfig uiConfig = getUiConfig();
+        ViewGroup viewGroup = (ViewGroup) LayoutInflater.from(this)
+                .inflate(uiConfig.getLayoutId(), null, false);
+        initPreviewView(uiConfig.getPreviewView(viewGroup));
+        initOverlayView(uiConfig.getOverlayView(viewGroup));
+        initManualEntryButton(uiConfig.getManualEntryButton(viewGroup));
+        setContentView(viewGroup);
     }
 
-    private void initManualEntryButton() {
+    private UIConfig getUiConfig() {
+        try {
+            Class<UIConfig> uiConfigClazz = (Class<UIConfig>) getIntent().getSerializableExtra(EXTRA_UI_CONFIG);
+            if (uiConfigClazz == null) {
+                return new DefaultUiConfig();
+            }
+            return uiConfigClazz.newInstance();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new DefaultUiConfig();
+        }
+    }
+
+    private void initManualEntryButton(View manualEntryButton) {
         // Show the keyboard button
-        TextView manualEntryButton = (TextView) findViewById(R.id.manual_entry_button);
         if (suppressManualEntry) {
             manualEntryButton.setVisibility(View.GONE);
         } else {
             manualEntryButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(v.getContext(), "Click", Toast.LENGTH_SHORT).show();
+                    setResultAndFinish(RESULT_SCAN_CANCELED, new Intent());
                 }
             });
         }
     }
 
-    private void initPreviewView() {
-        mPreview = (Preview) findViewById(R.id.preview_view);
+    private void initPreviewView(Preview preview) {
+        mPreview = preview;
         mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
     }
 
-    private void initOverlayView() {
-        mOverlay = (OverlayView) findViewById(R.id.overlay_view);
+    private void initOverlayView(OverlayView overlayView) {
+        mOverlay = overlayView;
         if (getIntent() != null) {
 
             int color = getIntent().getIntExtra(EXTRA_GUIDE_COLOR, 0);
