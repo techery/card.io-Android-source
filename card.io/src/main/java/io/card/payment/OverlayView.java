@@ -78,7 +78,7 @@ public class OverlayView extends View {
     private static final Orientation[] GRADIENT_ORIENTATIONS = { Orientation.TOP_BOTTOM,
             Orientation.LEFT_RIGHT, Orientation.BOTTOM_TOP, Orientation.RIGHT_LEFT };
 
-    private static final int GUIDE_STROKE_WIDTH = 17;
+    private static final int GUIDE_STROKE_WIDTH = 10;
 
     private static final float CORNER_RADIUS_SIZE = 1 / 15.0f;
 
@@ -86,6 +86,8 @@ public class OverlayView extends View {
     private static final int TORCH_HEIGHT = 50;
 
     private static final int BUTTON_TOUCH_TOLERANCE = 20;
+
+    private static final int GUIDE_CORNER_RADIUS = 20;
 
     private final WeakReference<CardIOActivity> mScanActivityRef;
     private DetectionInfo mDInfo;
@@ -95,6 +97,7 @@ public class OverlayView extends View {
     private int mRotation;
     private int mState;
     private int guideColor;
+    private float guideCornerRadius;
 
     private String scanInstructions;
 
@@ -140,6 +143,8 @@ public class OverlayView extends View {
         mLockedBackgroundPaint.setColor(0xbb000000); // 75% black
 
         scanInstructions = LocalizedStrings.getString(StringKey.SCAN_GUIDE);
+
+        guideCornerRadius = mScale * GUIDE_CORNER_RADIUS;
     }
 
     public int getGuideColor() {
@@ -231,10 +236,10 @@ public class OverlayView extends View {
     }
 
     // Drawing methods
-    private Rect guideStrokeRect(int x1, int y1, int x2, int y2) {
-        Rect r;
+    private RectF guideStrokeRectF(int x1, int y1, int x2, int y2) {
+        RectF r;
         int t2 = (int) (GUIDE_STROKE_WIDTH / 2 * mScale);
-        r = new Rect();
+        r = new RectF();
 
         r.left = Math.min(x1, x2) - t2;
         r.right = Math.max(x1, x2) + t2;
@@ -274,57 +279,58 @@ public class OverlayView extends View {
         mGuidePaint.setStyle(Paint.Style.FILL);
         mGuidePaint.setColor(guideColor);
 
+        float radius = guideCornerRadius;
         // top left
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.top, mGuide.left + tickLength, mGuide.top),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.top, mGuide.left, mGuide.top + tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left + tickLength, mGuide.top),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.top + tickLength),
+                radius, radius, mGuidePaint);
 
         // top right
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.top, mGuide.right - tickLength, mGuide.top),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.top, mGuide.right, mGuide.top + tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right - tickLength, mGuide.top),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.top + tickLength),
+                radius, radius, mGuidePaint);
 
         // bottom left
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.left + tickLength, mGuide.bottom),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.left, mGuide.bottom - tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left + tickLength, mGuide.bottom),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left, mGuide.bottom - tickLength),
+                radius, radius, mGuidePaint);
 
         // bottom right
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.bottom, mGuide.right - tickLength,
-                        mGuide.bottom), mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.bottom, mGuide.right, mGuide.bottom
-                        - tickLength), mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right - tickLength,
+                        mGuide.bottom), radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right, mGuide.bottom
+                        - tickLength), radius, radius, mGuidePaint);
 
         if (mDInfo != null) {
             if (mDInfo.topEdge) {
-                canvas.drawRect(guideStrokeRect(mGuide.left, mGuide.top, mGuide.right, mGuide.top),
-                        mGuidePaint);
+                canvas.drawRoundRect(guideStrokeRectF(mGuide.left, mGuide.top, mGuide.right, mGuide.top),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.bottomEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.right, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.right, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.leftEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.left, mGuide.top, mGuide.left, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.rightEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.right, mGuide.top, mGuide.right, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
 
             if (mDInfo.numVisibleEdges() < 3) {
