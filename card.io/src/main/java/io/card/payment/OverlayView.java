@@ -109,6 +109,7 @@ public class OverlayView extends View {
     private boolean mShowTorch;
     private int mRotationFlip;
     private float mScale = 1;
+    private int instructionsMarginBottom;
 
     public OverlayView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
@@ -119,6 +120,7 @@ public class OverlayView extends View {
         if (!TextUtils.isEmpty(scanInstructions)) {
             setScanInstructions(scanInstructions);
         }
+        instructionsMarginBottom = attrs.getDimensionPixelSize(R.styleable.CioOverlayView_cio_scan_instructions_margin_bottom, 0);
         attrs.recycle();
 
         mScanActivityRef = new WeakReference<>((CardIOActivity)context);
@@ -336,7 +338,16 @@ public class OverlayView extends View {
                 mGuidePaint.setTextSize(guideFontSize);
 
                 // Translate and rotate text
-                canvas.translate(mGuide.left + mGuide.width() / 2, mGuide.top + mGuide.height() / 2);
+                int dx = mGuide.left + mGuide.width() / 2;
+                int dy = mGuide.top + mGuide.height() / 2;
+
+                if ((mRotation == 0) || (mRotation == 180)) {
+                    dy -= instructionsMarginBottom;
+                } else {
+                    dx += instructionsMarginBottom;
+                }
+
+                canvas.translate(dx, dy);
                 canvas.rotate(mRotationFlip * mRotation);
 
                 if (scanInstructions != null && scanInstructions != "") {

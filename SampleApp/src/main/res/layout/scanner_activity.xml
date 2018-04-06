@@ -16,7 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:cio_guide_color="#4445ff"
-        app:cio_scan_instructions="Put your card in this rectangle"/>
+        app:cio_scan_instructions="Put your card in this rectangle"
+        app:cio_scan_instructions_margin_bottom ="160dp"/>
 
     <TextView
         android:id="@+id/scanner_manual_entry_button"
