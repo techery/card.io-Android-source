@@ -20,7 +20,7 @@ import android.view.ViewGroup;
  * by surface view lifecycle callbacks. We only attempt (re-)start camera preview if there is a
  * valid surface view to draw on.
  */
-class Preview extends ViewGroup {
+public class Preview extends ViewGroup {
     private static final String TAG = Preview.class.getSimpleName();
 
     private int mPreviewWidth;
@@ -28,17 +28,18 @@ class Preview extends ViewGroup {
 
     SurfaceView mSurfaceView;
 
-    public Preview(Context context, AttributeSet attributeSet, int previewWidth, int previewHeight) {
+    public Preview(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
+        mSurfaceView = new SurfaceView(context);
+        addView(mSurfaceView);
+    }
 
+    public void setPreviewSize(int previewWidth, int previewHeight) {
         // the preview size comes from the cardScanner (camera)
         // need to swap width & height to account for implicit 90deg rotation
         // which is part of cardScanner. see "mCamera.setDisplayOrientation(90);"
         mPreviewWidth = previewHeight;
         mPreviewHeight = previewWidth;
-
-        mSurfaceView = new SurfaceView(context);
-        addView(mSurfaceView);
     }
 
     public SurfaceView getSurfaceView() {

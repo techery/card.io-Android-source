@@ -4,6 +4,8 @@ package io.card.payment;
  * See the file "LICENSE.md" for the full license governing this code.
  */
 
+import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -18,6 +20,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -64,7 +67,7 @@ import io.card.payment.i18n.StringKey;
  * independent of screen scale.
  * <p/>
  */
-class OverlayView extends View {
+public class OverlayView extends View {
     private static final String TAG = OverlayView.class.getSimpleName();
 
     private static final float GUIDE_FONT_SIZE = 26.0f;
@@ -75,29 +78,27 @@ class OverlayView extends View {
     private static final Orientation[] GRADIENT_ORIENTATIONS = { Orientation.TOP_BOTTOM,
             Orientation.LEFT_RIGHT, Orientation.BOTTOM_TOP, Orientation.RIGHT_LEFT };
 
-    private static final int GUIDE_STROKE_WIDTH = 17;
+    private static final int GUIDE_STROKE_WIDTH = 10;
 
     private static final float CORNER_RADIUS_SIZE = 1 / 15.0f;
 
     private static final int TORCH_WIDTH = 70;
     private static final int TORCH_HEIGHT = 50;
 
-    private static final int LOGO_MAX_WIDTH = 100;
-    private static final int LOGO_MAX_HEIGHT = TORCH_HEIGHT;
-
     private static final int BUTTON_TOUCH_TOLERANCE = 20;
+
+    private static final int GUIDE_CORNER_RADIUS = 20;
 
     private final WeakReference<CardIOActivity> mScanActivityRef;
     private DetectionInfo mDInfo;
     private Bitmap mBitmap;
-    GradientDrawable mScanLineDrawable;
     private Rect mGuide;
     private CreditCard mDetectedCard;
     private int mRotation;
     private int mState;
     private int guideColor;
+    private float guideCornerRadius;
 
-    private boolean hideCardIOLogo;
     private String scanInstructions;
 
     // Keep paint objects around for high frequency methods to avoid re-allocating them.
@@ -107,17 +108,25 @@ class OverlayView extends View {
     private Path mLockedBackgroundPath;
     private Rect mCameraPreviewRect;
     private final Torch mTorch;
-    private final Logo mLogo;
-    private Rect mTorchRect, mLogoRect;
-    private final boolean mShowTorch;
+    private Rect mTorchRect;
+    private boolean mShowTorch;
     private int mRotationFlip;
     private float mScale = 1;
+    private int instructionsMarginBottom;
 
-    public OverlayView(CardIOActivity captureActivity, AttributeSet attributeSet, boolean showTorch) {
-        super(captureActivity, attributeSet);
+    public OverlayView(Context context, AttributeSet attributeSet) {
+        super(context, attributeSet);
+        TypedArray attrs = context.obtainStyledAttributes(attributeSet, R.styleable.CioOverlayView);
+        int guideColor = attrs.getColor(R.styleable.CioOverlayView_cio_guide_color, Color.GREEN);
+        setGuideColor(guideColor);
+        String scanInstructions = attrs.getString(R.styleable.CioOverlayView_cio_scan_instructions);
+        if (!TextUtils.isEmpty(scanInstructions)) {
+            setScanInstructions(scanInstructions);
+        }
+        instructionsMarginBottom = attrs.getDimensionPixelSize(R.styleable.CioOverlayView_cio_scan_instructions_margin_bottom, 0);
+        attrs.recycle();
 
-        mShowTorch = showTorch;
-        mScanActivityRef = new WeakReference<CardIOActivity>(captureActivity);
+        mScanActivityRef = new WeakReference<>((CardIOActivity)context);
 
         mRotationFlip = 1;
 
@@ -125,7 +134,6 @@ class OverlayView extends View {
         mScale = getResources().getDisplayMetrics().density / 1.5f;
 
         mTorch = new Torch(TORCH_WIDTH * mScale, TORCH_HEIGHT * mScale);
-        mLogo = new Logo(captureActivity);
 
         mGuidePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -135,6 +143,8 @@ class OverlayView extends View {
         mLockedBackgroundPaint.setColor(0xbb000000); // 75% black
 
         scanInstructions = LocalizedStrings.getString(StringKey.SCAN_GUIDE);
+
+        guideCornerRadius = mScale * GUIDE_CORNER_RADIUS;
     }
 
     public int getGuideColor() {
@@ -143,14 +153,6 @@ class OverlayView extends View {
 
     public void setGuideColor(int color) {
         guideColor = color;
-    }
-
-    public boolean getHideCardIOLogo() {
-        return hideCardIOLogo;
-    }
-
-    public void setHideCardIOLogo(boolean hide) {
-        hideCardIOLogo = hide;
     }
 
     public String getScanInstructions() {
@@ -182,12 +184,6 @@ class OverlayView extends View {
             // mTorchRect used only for touch lookup, not layout
             mTorchRect = Util.rectGivenCenter(torchPoint, (int) (TORCH_WIDTH * mScale),
                     (int) (TORCH_HEIGHT * mScale));
-
-            // mLogoRect used only for touch lookup, not layout
-            Point logoPoint = new Point(mCameraPreviewRect.right - topEdgeUIOffset.x,
-                    mCameraPreviewRect.top + topEdgeUIOffset.y);
-            mLogoRect = Util.rectGivenCenter(logoPoint, (int) (LOGO_MAX_WIDTH * mScale),
-                    (int) (LOGO_MAX_HEIGHT * mScale));
 
             int[] gradientColors = { Color.WHITE, Color.BLACK };
             Orientation gradientOrientation = GRADIENT_ORIENTATIONS[(mRotation / 90) % 4];
@@ -240,10 +236,10 @@ class OverlayView extends View {
     }
 
     // Drawing methods
-    private Rect guideStrokeRect(int x1, int y1, int x2, int y2) {
-        Rect r;
+    private RectF guideStrokeRectF(int x1, int y1, int x2, int y2) {
+        RectF r;
         int t2 = (int) (GUIDE_STROKE_WIDTH / 2 * mScale);
-        r = new Rect();
+        r = new RectF();
 
         r.left = Math.min(x1, x2) - t2;
         r.right = Math.max(x1, x2) + t2;
@@ -283,57 +279,58 @@ class OverlayView extends View {
         mGuidePaint.setStyle(Paint.Style.FILL);
         mGuidePaint.setColor(guideColor);
 
+        float radius = guideCornerRadius;
         // top left
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.top, mGuide.left + tickLength, mGuide.top),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.top, mGuide.left, mGuide.top + tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left + tickLength, mGuide.top),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.top + tickLength),
+                radius, radius, mGuidePaint);
 
         // top right
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.top, mGuide.right - tickLength, mGuide.top),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.top, mGuide.right, mGuide.top + tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right - tickLength, mGuide.top),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.top + tickLength),
+                radius, radius, mGuidePaint);
 
         // bottom left
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.left + tickLength, mGuide.bottom),
-                mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.left, mGuide.bottom - tickLength),
-                mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left + tickLength, mGuide.bottom),
+                radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left, mGuide.bottom - tickLength),
+                radius, radius, mGuidePaint);
 
         // bottom right
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.bottom, mGuide.right - tickLength,
-                        mGuide.bottom), mGuidePaint);
-        canvas.drawRect(
-                guideStrokeRect(mGuide.right, mGuide.bottom, mGuide.right, mGuide.bottom
-                        - tickLength), mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right - tickLength,
+                        mGuide.bottom), radius, radius, mGuidePaint);
+        canvas.drawRoundRect(
+                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right, mGuide.bottom
+                        - tickLength), radius, radius, mGuidePaint);
 
         if (mDInfo != null) {
             if (mDInfo.topEdge) {
-                canvas.drawRect(guideStrokeRect(mGuide.left, mGuide.top, mGuide.right, mGuide.top),
-                        mGuidePaint);
+                canvas.drawRoundRect(guideStrokeRectF(mGuide.left, mGuide.top, mGuide.right, mGuide.top),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.bottomEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.left, mGuide.bottom, mGuide.right, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.right, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.leftEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.left, mGuide.top, mGuide.left, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
             if (mDInfo.rightEdge) {
-                canvas.drawRect(
-                        guideStrokeRect(mGuide.right, mGuide.top, mGuide.right, mGuide.bottom),
-                        mGuidePaint);
+                canvas.drawRoundRect(
+                        guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.bottom),
+                        radius, radius, mGuidePaint);
             }
 
             if (mDInfo.numVisibleEdges() < 3) {
@@ -347,7 +344,16 @@ class OverlayView extends View {
                 mGuidePaint.setTextSize(guideFontSize);
 
                 // Translate and rotate text
-                canvas.translate(mGuide.left + mGuide.width() / 2, mGuide.top + mGuide.height() / 2);
+                int dx = mGuide.left + mGuide.width() / 2;
+                int dy = mGuide.top + mGuide.height() / 2;
+
+                if ((mRotation == 0) || (mRotation == 180)) {
+                    dy -= instructionsMarginBottom;
+                } else {
+                    dx += instructionsMarginBottom;
+                }
+
+                canvas.translate(dx, dy);
                 canvas.rotate(mRotationFlip * mRotation);
 
                 if (scanInstructions != null && scanInstructions != "") {
@@ -362,15 +368,6 @@ class OverlayView extends View {
             }
         }
         canvas.restore();
-
-        // draw logo
-        if (!hideCardIOLogo) {
-            canvas.save();
-            canvas.translate(mLogoRect.exactCenterX(), mLogoRect.exactCenterY());
-            canvas.rotate(mRotationFlip * mRotation);
-            mLogo.draw(canvas, LOGO_MAX_WIDTH * mScale, LOGO_MAX_HEIGHT * mScale);
-            canvas.restore();
-        }
 
         if (mShowTorch) {
             // draw torch
@@ -477,13 +474,13 @@ class OverlayView extends View {
         mCameraPreviewRect = rect;
     }
 
+    public void setShowTorch(boolean showTorch) {
+        mShowTorch = showTorch;
+    }
+
     public void setTorchOn(boolean b) {
         mTorch.setOn(b);
         invalidate();
-    }
-
-    public void setUseCardIOLogo(boolean useCardIOLogo) {
-        mLogo.loadLogo(useCardIOLogo);
     }
 
     // for test

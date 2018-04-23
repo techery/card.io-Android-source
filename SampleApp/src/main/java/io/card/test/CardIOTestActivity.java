@@ -13,7 +13,6 @@ public class CardIOTestActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         Intent intent = new Intent(this, CardIOActivity.class)
-                .putExtra(CardIOActivity.EXTRA_SUPPRESS_CONFIRMATION, true)
                 .putExtra("io.card.payment.cameraBypassTestMode", true);
 
         startActivityForResult(intent, 1);
