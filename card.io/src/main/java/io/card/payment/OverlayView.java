@@ -18,6 +18,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.text.TextUtils;
@@ -26,9 +27,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.lang.ref.WeakReference;
-
-import io.card.payment.i18n.LocalizedStrings;
-import io.card.payment.i18n.StringKey;
 
 /**
  * This class implements a transparent overlay that is drawn over the raw camera capture frames.
@@ -74,6 +72,7 @@ public class OverlayView extends View {
     private static final float GUIDE_LINE_PADDING = 8.0f;
     private static final float GUIDE_LINE_HEIGHT = GUIDE_FONT_SIZE + GUIDE_LINE_PADDING;
     private static final float CARD_NUMBER_MARKUP_FONT_SIZE = GUIDE_FONT_SIZE + 2;
+    private static final float CORNER_CUTOUT_LENGTH = 70;
 
     private static final Orientation[] GRADIENT_ORIENTATIONS = { Orientation.TOP_BOTTOM,
             Orientation.LEFT_RIGHT, Orientation.BOTTOM_TOP, Orientation.RIGHT_LEFT };
@@ -98,6 +97,12 @@ public class OverlayView extends View {
     private int mState;
     private int guideColor;
     private float guideCornerRadius;
+    float guideStrokeWidthPaint;
+    int cornerCutoutLength;
+    private Path topEdgeCutoutPath;
+    private Path bottomEdgeCutoutPath;
+    private Path leftEdgeCutoutPath;
+    private Path rightEdgeCutoutPath;
 
     private String scanInstructions;
 
@@ -142,9 +147,9 @@ public class OverlayView extends View {
         mLockedBackgroundPaint.setStyle(Paint.Style.FILL);
         mLockedBackgroundPaint.setColor(0xbb000000); // 75% black
 
-        scanInstructions = LocalizedStrings.getString(StringKey.SCAN_GUIDE);
-
         guideCornerRadius = mScale * GUIDE_CORNER_RADIUS;
+        guideStrokeWidthPaint = GUIDE_STROKE_WIDTH / 2 * mScale;
+        cornerCutoutLength = (int) (CORNER_CUTOUT_LENGTH * mScale);
     }
 
     public int getGuideColor() {
@@ -194,8 +199,10 @@ public class OverlayView extends View {
 
             mLockedBackgroundPath = new Path();
             mLockedBackgroundPath.addRect(new RectF(mCameraPreviewRect), Path.Direction.CW);
-            mLockedBackgroundPath.addRect(new RectF(mGuide), Path.Direction.CCW);
+            mLockedBackgroundPath.addRoundRect(new RectF(mGuide), guideCornerRadius, guideCornerRadius, Path.Direction.CCW);
         }
+
+        initCutoutPaths();
     }
 
     public void setBitmap(Bitmap bitmap) {
@@ -219,154 +226,77 @@ public class OverlayView extends View {
         this.mDInfo = dinfo;
     }
 
-    public int getCardX() {
-        return mGuide.centerX() - mBitmap.getWidth() / 2;
-    }
-
-    public int getCardY() {
-        return mGuide.centerY() - mBitmap.getHeight() / 2;
-    }
-
-    public Bitmap getCardImage() {
-        if (mBitmap != null && !mBitmap.isRecycled()) {
-            return Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight());
-        } else {
-            return null;
-        }
-    }
-
-    // Drawing methods
-    private RectF guideStrokeRectF(int x1, int y1, int x2, int y2) {
-        RectF r;
-        int t2 = (int) (GUIDE_STROKE_WIDTH / 2 * mScale);
-        r = new RectF();
-
-        r.left = Math.min(x1, x2) - t2;
-        r.right = Math.max(x1, x2) + t2;
-
-        r.top = Math.min(y1, y2) - t2;
-        r.bottom = Math.max(y1, y2) + t2;
-
-        return r;
-    }
-
     @Override
     public void onDraw(Canvas canvas) {
-
         if (mGuide == null || mCameraPreviewRect == null) {
             return;
         }
         canvas.save();
-        int tickLength;
 
-        // Draw background rect
-
-        mGradientDrawable.draw(canvas);
-
-        if ((mRotation == 0) || (mRotation == 180)) {
-            tickLength = (mGuide.bottom - mGuide.top) / 4;
-        } else {
-            tickLength = (mGuide.right - mGuide.left) / 4;
-        }
-
-        if (mDInfo != null && mDInfo.numVisibleEdges() == 4) {
-            // draw lock shadow.
-            canvas.drawPath(mLockedBackgroundPath, mLockedBackgroundPaint);
-        }
+        // draw lock shadow.
+        canvas.drawPath(mLockedBackgroundPath, mLockedBackgroundPaint);
 
         // Draw guide lines
         mGuidePaint.clearShadowLayer();
-        mGuidePaint.setStyle(Paint.Style.FILL);
+        mGuidePaint.setStyle(Paint.Style.STROKE);
+        mGuidePaint.setStrokeWidth(guideStrokeWidthPaint);
         mGuidePaint.setColor(guideColor);
 
-        float radius = guideCornerRadius;
-        // top left
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left + tickLength, mGuide.top),
-                radius, radius, mGuidePaint);
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.top + tickLength),
-                radius, radius, mGuidePaint);
-
-        // top right
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right - tickLength, mGuide.top),
-                radius, radius, mGuidePaint);
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.top + tickLength),
-                radius, radius, mGuidePaint);
-
-        // bottom left
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left + tickLength, mGuide.bottom),
-                radius, radius, mGuidePaint);
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.left, mGuide.bottom - tickLength),
-                radius, radius, mGuidePaint);
-
-        // bottom right
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right - tickLength,
-                        mGuide.bottom), radius, radius, mGuidePaint);
-        canvas.drawRoundRect(
-                guideStrokeRectF(mGuide.right, mGuide.bottom, mGuide.right, mGuide.bottom
-                        - tickLength), radius, radius, mGuidePaint);
-
+        Path guidePath = new Path();
+        guidePath.addRoundRect(new RectF(mGuide), guideCornerRadius, guideCornerRadius, Path.Direction.CW);
         if (mDInfo != null) {
-            if (mDInfo.topEdge) {
-                canvas.drawRoundRect(guideStrokeRectF(mGuide.left, mGuide.top, mGuide.right, mGuide.top),
-                        radius, radius, mGuidePaint);
-            }
-            if (mDInfo.bottomEdge) {
-                canvas.drawRoundRect(
-                        guideStrokeRectF(mGuide.left, mGuide.bottom, mGuide.right, mGuide.bottom),
-                        radius, radius, mGuidePaint);
-            }
-            if (mDInfo.leftEdge) {
-                canvas.drawRoundRect(
-                        guideStrokeRectF(mGuide.left, mGuide.top, mGuide.left, mGuide.bottom),
-                        radius, radius, mGuidePaint);
-            }
-            if (mDInfo.rightEdge) {
-                canvas.drawRoundRect(
-                        guideStrokeRectF(mGuide.right, mGuide.top, mGuide.right, mGuide.bottom),
-                        radius, radius, mGuidePaint);
+            if (!mDInfo.topEdge) {
+                canvas.clipPath(topEdgeCutoutPath, Region.Op.XOR);
             }
 
-            if (mDInfo.numVisibleEdges() < 3) {
-                // Draw guide text
-                // Set up paint attributes
-                float guideHeight = GUIDE_LINE_HEIGHT * mScale;
-                float guideFontSize = GUIDE_FONT_SIZE * mScale;
+            if (!mDInfo.bottomEdge) {
+                canvas.clipPath(bottomEdgeCutoutPath, Region.Op.XOR);
+            }
 
-                Util.setupTextPaintStyle(mGuidePaint);
-                mGuidePaint.setTextAlign(Align.CENTER);
-                mGuidePaint.setTextSize(guideFontSize);
+            if (!mDInfo.leftEdge) {
+                canvas.clipPath(leftEdgeCutoutPath, Region.Op.XOR);
+            }
 
-                // Translate and rotate text
-                int dx = mGuide.left + mGuide.width() / 2;
-                int dy = mGuide.top + mGuide.height() / 2;
+            if (!mDInfo.rightEdge) {
+                canvas.clipPath(rightEdgeCutoutPath, Region.Op.XOR);
+            }
+        }
+        canvas.drawPath(guidePath, mGuidePaint);
 
-                if ((mRotation == 0) || (mRotation == 180)) {
-                    dy -= instructionsMarginBottom;
-                } else {
-                    dx += instructionsMarginBottom;
-                }
+        if (mDInfo.numVisibleEdges() < 3) {
+            // Draw guide text
+            // Set up paint attributes
+            float guideHeight = GUIDE_LINE_HEIGHT * mScale;
+            float guideFontSize = GUIDE_FONT_SIZE * mScale;
 
-                canvas.translate(dx, dy);
-                canvas.rotate(mRotationFlip * mRotation);
+            Util.setupTextPaintStyle(mGuidePaint);
+            mGuidePaint.setTextAlign(Align.CENTER);
+            mGuidePaint.setTextSize(guideFontSize);
 
-                if (scanInstructions != null && scanInstructions != "") {
-                    String[] lines = scanInstructions.split("\n");
-                    float y = -(((guideHeight * (lines.length - 1)) - guideFontSize) / 2) - 3;
+            // Translate and rotate text
+            int dx = mGuide.left + mGuide.width() / 2;
+            int dy = mGuide.top + mGuide.height() / 2;
 
-                    for (int i = 0; i < lines.length; i++) {
-                        canvas.drawText(lines[i], 0, y, mGuidePaint);
-                        y += guideHeight;
-                    }
+            if ((mRotation == 0) || (mRotation == 180)) {
+                dy -= instructionsMarginBottom;
+            } else {
+                dx += instructionsMarginBottom;
+            }
+
+            canvas.translate(dx, dy);
+            canvas.rotate(mRotationFlip * mRotation);
+
+            if (scanInstructions != null && scanInstructions != "") {
+                String[] lines = scanInstructions.split("\n");
+                float y = -(((guideHeight * (lines.length - 1)) - guideFontSize) / 2) - 3;
+
+                for (int i = 0; i < lines.length; i++) {
+                    canvas.drawText(lines[i], 0, y, mGuidePaint);
+                    y += guideHeight;
                 }
             }
         }
+
         canvas.restore();
 
         if (mShowTorch) {
@@ -377,6 +307,77 @@ public class OverlayView extends View {
             mTorch.draw(canvas);
             canvas.restore();
         }
+    }
+
+    private void initCutoutPaths() {
+        topEdgeCutoutPath = getTopCotoutPath();
+        bottomEdgeCutoutPath = getBottomCotoutPath();
+        leftEdgeCutoutPath = getLeftEdgeCutoutPath();
+        rightEdgeCutoutPath = getRightEdgeCutoutPath();
+    }
+
+    private Path getTopCotoutPath() {
+        Path cutoutPath = new Path();
+        cutoutPath.addRect(new RectF(mGuide.left + cornerCutoutLength, mGuide.top - guideStrokeWidthPaint,
+                mGuide.right - cornerCutoutLength, mGuide.top + guideStrokeWidthPaint), Path.Direction.CW);
+
+        Path leftCorner = new Path();
+        leftCorner.addCircle(mGuide.left + cornerCutoutLength, mGuide.top, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(leftCorner, Path.Op.DIFFERENCE);
+
+        Path rightCorner = new Path();
+        rightCorner.addCircle(mGuide.right - cornerCutoutLength, mGuide.top, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(rightCorner, Path.Op.DIFFERENCE);
+
+        return cutoutPath;
+    }
+
+    private Path getBottomCotoutPath() {
+        Path cutoutPath = new Path();
+        cutoutPath.addRect(new RectF(mGuide.left + cornerCutoutLength, mGuide.bottom - guideStrokeWidthPaint,
+                mGuide.right - cornerCutoutLength, mGuide.bottom + guideStrokeWidthPaint), Path.Direction.CW);
+
+        Path leftCorner = new Path();
+        leftCorner.addCircle(mGuide.left + cornerCutoutLength, mGuide.bottom, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(leftCorner, Path.Op.DIFFERENCE);
+
+        Path rightCorner = new Path();
+        rightCorner.addCircle(mGuide.right - cornerCutoutLength, mGuide.bottom, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(rightCorner, Path.Op.DIFFERENCE);
+
+        return cutoutPath;
+    }
+
+    private Path getLeftEdgeCutoutPath() {
+        Path cutoutPath = new Path();
+        cutoutPath.addRect(new RectF(mGuide.left - guideStrokeWidthPaint, mGuide.top + cornerCutoutLength,
+                mGuide.left + guideStrokeWidthPaint, mGuide.bottom - cornerCutoutLength), Path.Direction.CW);
+
+        Path topCorner = new Path();
+        topCorner.addCircle(mGuide.left, mGuide.top + cornerCutoutLength, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(topCorner, Path.Op.DIFFERENCE);
+
+        Path bottomCorner = new Path();
+        bottomCorner.addCircle(mGuide.left, mGuide.bottom - cornerCutoutLength, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(bottomCorner, Path.Op.DIFFERENCE);
+
+        return cutoutPath;
+    }
+
+    public Path getRightEdgeCutoutPath() {
+        Path cutoutPath = new Path();
+        cutoutPath.addRect(new RectF(mGuide.right - guideStrokeWidthPaint, mGuide.top + cornerCutoutLength,
+                mGuide.right + guideStrokeWidthPaint, mGuide.bottom - cornerCutoutLength), Path.Direction.CW);
+
+        Path topCorner = new Path();
+        topCorner.addCircle(mGuide.right, mGuide.top + cornerCutoutLength, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(topCorner, Path.Op.DIFFERENCE);
+
+        Path bottomCorner = new Path();
+        bottomCorner.addCircle(mGuide.right, mGuide.bottom - cornerCutoutLength, guideStrokeWidthPaint / 2, Path.Direction.CW);
+        cutoutPath.op(bottomCorner, Path.Op.DIFFERENCE);
+
+        return cutoutPath;
     }
 
     public void setDetectedCard(CreditCard creditCard) {
