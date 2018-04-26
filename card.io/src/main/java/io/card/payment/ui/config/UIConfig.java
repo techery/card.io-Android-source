@@ -1,5 +1,6 @@
 package io.card.payment.ui.config;
 
+import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -15,4 +16,6 @@ public interface UIConfig {
     OverlayView getOverlayView(ViewGroup rootViewGroup);
 
     View getManualEntryButton(ViewGroup rootViewGroup);
+
+    void onInflated(Activity activity, ViewGroup viewGroup);
 }

@@ -1,5 +1,6 @@
 package io.card.development;
 
+import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -27,5 +28,10 @@ public class UiConfigImpl implements UIConfig {
     @Override
     public View getManualEntryButton(ViewGroup rootViewGroup) {
         return rootViewGroup.findViewById(R.id.scanner_manual_entry_button);
+    }
+
+    @Override
+    public void onInflated(Activity activity, ViewGroup viewGroup) {
+
     }
 }

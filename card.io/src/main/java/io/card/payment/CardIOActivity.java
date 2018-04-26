@@ -14,7 +14,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.hardware.SensorManager;
@@ -39,8 +38,8 @@ import java.util.Date;
 import io.card.payment.i18n.LocalizedStrings;
 import io.card.payment.i18n.StringKey;
 import io.card.payment.ui.ActivityHelper;
-import io.card.payment.ui.config.UIConfig;
 import io.card.payment.ui.config.DefaultUiConfig;
+import io.card.payment.ui.config.UIConfig;
 
 /**
  * This is the entry point {@link android.app.Activity} for a card.io client to use <a
@@ -204,6 +203,10 @@ public final class CardIOActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (getApplicationInfo().theme != 0) {
+            setTheme(getApplicationInfo().theme);
+        }
 
         final Intent clientData = this.getIntent();
 
@@ -688,6 +691,7 @@ public final class CardIOActivity extends Activity {
         UIConfig uiConfig = getUiConfig();
         ViewGroup viewGroup = (ViewGroup) LayoutInflater.from(this)
                 .inflate(uiConfig.getLayoutId(), null, false);
+        uiConfig.onInflated(this, viewGroup);
         mPreview = uiConfig.getPreviewView(viewGroup);
         mPreview.setPreviewSize(mCardScanner.mPreviewWidth, mCardScanner.mPreviewHeight);
         mOverlay = uiConfig.getOverlayView(viewGroup);

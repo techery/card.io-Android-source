@@ -14,7 +14,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Debug;
@@ -128,9 +127,8 @@ class Util {
     }
 
     static public void setupTextPaintStyle(Paint paint) {
-        paint.setColor(Color.WHITE);
+        paint.setColor(Color.parseColor("#DEFFFFFF"));
         paint.setStyle(Paint.Style.FILL);
-        paint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD));
         paint.setAntiAlias(true);
         float[] black = { 0f, 0f, 0f };
         paint.setShadowLayer(1.5f, 0.5f, 0f, Color.HSVToColor(200, black));
