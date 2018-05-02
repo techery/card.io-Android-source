@@ -263,37 +263,35 @@ public class OverlayView extends View {
         }
         canvas.drawPath(guidePath, mGuidePaint);
 
-        if (mDInfo.numVisibleEdges() < 3) {
-            // Draw guide text
-            // Set up paint attributes
-            float guideHeight = GUIDE_LINE_HEIGHT * mScale;
-            float guideFontSize = GUIDE_FONT_SIZE * mScale;
+        // Draw guide text
+        // Set up paint attributes
+        float guideHeight = GUIDE_LINE_HEIGHT * mScale;
+        float guideFontSize = GUIDE_FONT_SIZE * mScale;
 
-            Util.setupTextPaintStyle(mGuidePaint);
-            mGuidePaint.setTextAlign(Align.CENTER);
-            mGuidePaint.setTextSize(guideFontSize);
+        Util.setupTextPaintStyle(mGuidePaint);
+        mGuidePaint.setTextAlign(Align.CENTER);
+        mGuidePaint.setTextSize(guideFontSize);
 
-            // Translate and rotate text
-            int dx = mGuide.left + mGuide.width() / 2;
-            int dy = mGuide.top + mGuide.height() / 2;
+        // Translate and rotate text
+        int dx = mGuide.left + mGuide.width() / 2;
+        int dy = mGuide.top + mGuide.height() / 2;
 
-            if ((mRotation == 0) || (mRotation == 180)) {
-                dy -= instructionsMarginBottom;
-            } else {
-                dx += instructionsMarginBottom;
-            }
+        if ((mRotation == 0) || (mRotation == 180)) {
+            dy -= instructionsMarginBottom;
+        } else {
+            dx += instructionsMarginBottom;
+        }
 
-            canvas.translate(dx, dy);
-            canvas.rotate(mRotationFlip * mRotation);
+        canvas.translate(dx, dy);
+        canvas.rotate(mRotationFlip * mRotation);
 
-            if (scanInstructions != null && scanInstructions != "") {
-                String[] lines = scanInstructions.split("\n");
-                float y = -(((guideHeight * (lines.length - 1)) - guideFontSize) / 2) - 3;
+        if (scanInstructions != null && scanInstructions != "") {
+            String[] lines = scanInstructions.split("\n");
+            float y = -(((guideHeight * (lines.length - 1)) - guideFontSize) / 2) - 3;
 
-                for (int i = 0; i < lines.length; i++) {
-                    canvas.drawText(lines[i], 0, y, mGuidePaint);
-                    y += guideHeight;
-                }
+            for (int i = 0; i < lines.length; i++) {
+                canvas.drawText(lines[i], 0, y, mGuidePaint);
+                y += guideHeight;
             }
         }
 
