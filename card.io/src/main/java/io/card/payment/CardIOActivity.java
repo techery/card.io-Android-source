@@ -49,6 +49,8 @@ import io.card.payment.ui.config.UIConfig;
  */
 public final class CardIOActivity extends Activity {
 
+    public static final String EXTRA_DISABLE_ORIENTATION_CHANGE = "io.card.payment.disableOrientationChange";
+
     /**
      * Boolean extra. Optional. Defaults to <code>false</code>. If
      * set to <code>false</code>, expiry information will not be required.
@@ -179,7 +181,6 @@ public final class CardIOActivity extends Activity {
 
     private OverlayView mOverlay;
     private OrientationEventListener orientationListener;
-    private UIConfig uiConfig;
 
     // TODO: the preview is accessed by the scanner. Not the best practice.
     Preview mPreview;
@@ -191,6 +192,7 @@ public final class CardIOActivity extends Activity {
     private boolean suppressManualEntry;
     private boolean mDetectOnly;
     private boolean waitingForPermission;
+    private boolean disableOrientationChange;
 
     private CardScanner mCardScanner;
 
@@ -215,16 +217,21 @@ public final class CardIOActivity extends Activity {
         // Validate app's manifest is correct.
         mDetectOnly = clientData.getBooleanExtra(EXTRA_SUPPRESS_SCAN, false);
 
-        ResolveInfo resolveInfo;
-        String errorMsg;
+        disableOrientationChange = clientData.getBooleanExtra(EXTRA_DISABLE_ORIENTATION_CHANGE, false);
+        if (disableOrientationChange) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        } else {
+            ResolveInfo resolveInfo;
+            String errorMsg;
 
-        // Check for CardIOActivity's orientation config in manifest
-        resolveInfo = getPackageManager().resolveActivity(clientData,
-                PackageManager.MATCH_DEFAULT_ONLY);
-        errorMsg = Util.manifestHasConfigChange(resolveInfo, CardIOActivity.class);
-        if (errorMsg != null) {
-            throw new RuntimeException(errorMsg); // Throw the actual exception from this class, for
-            // clarity.
+            // Check for CardIOActivity's orientation config in manifest
+            resolveInfo = getPackageManager().resolveActivity(clientData,
+                    PackageManager.MATCH_DEFAULT_ONLY);
+            errorMsg = Util.manifestHasConfigChange(resolveInfo, CardIOActivity.class);
+            if (errorMsg != null) {
+                throw new RuntimeException(errorMsg); // Throw the actual exception from this class, for
+                // clarity.
+            }
         }
 
         suppressManualEntry = clientData.getBooleanExtra(EXTRA_SUPPRESS_MANUAL_ENTRY, false);
@@ -394,6 +401,9 @@ public final class CardIOActivity extends Activity {
         } else if (orientation > 270 - DEGREE_DELTA && orientation < 270 + DEGREE_DELTA) {
             degrees = 270;
             mFrameOrientation = ORIENTATION_LANDSCAPE_RIGHT;
+        }
+        if (degrees != 0 && disableOrientationChange)  {
+            return;
         }
         if (degrees >= 0 && degrees != mLastDegrees) {
             mCardScanner.setDeviceOrientation(mFrameOrientation);
