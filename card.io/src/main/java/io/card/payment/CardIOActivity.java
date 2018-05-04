@@ -429,7 +429,7 @@ public final class CardIOActivity extends Activity {
 
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            ActivityHelper.setFlagSecure(this);
+//            ActivityHelper.setFlagSecure(this);
 
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             orientationListener.enable();
