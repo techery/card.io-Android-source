@@ -49,6 +49,18 @@ import io.card.payment.ui.config.UIConfig;
  */
 public final class CardIOActivity extends Activity {
 
+    /**
+     * Boolean extra. Optional. Defaults to <code>false</code>. If
+     * set to <code>false</code>, screen capture will be disabled. Otherwise enabled it
+     * to be able to capture
+     */
+    public static final String EXTRA_ENABLE_SCREEN_CAPTURE = "io.card.payment.enableScreenCapture";
+
+    /**
+     * Boolean extra. Optional. Defaults to <code>false</code>. If
+     * set to <code>false</code>, screen rotation will be enabled.
+     * Otherwise on disabling orientation change only portrait orientation will be used.
+     */
     public static final String EXTRA_DISABLE_ORIENTATION_CHANGE = "io.card.payment.disableOrientationChange";
 
     /**
@@ -429,7 +441,9 @@ public final class CardIOActivity extends Activity {
 
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            ActivityHelper.setFlagSecure(this);
+            if (!getIntent().getBooleanExtra(EXTRA_ENABLE_SCREEN_CAPTURE, false)) {
+                ActivityHelper.setFlagSecure(this);
+            }
 
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             orientationListener.enable();

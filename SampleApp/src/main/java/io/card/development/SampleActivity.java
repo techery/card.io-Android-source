@@ -87,6 +87,7 @@ public class SampleActivity extends Activity {
                 .putExtra(CardIOActivity.EXTRA_SUPPRESS_SCAN, mSuppressScanToggle.isChecked())
                 .putExtra(CardIOActivity.EXTRA_RETURN_CARD_IMAGE, true)
                 .putExtra(CardIOActivity.EXTRA_DISABLE_ORIENTATION_CHANGE, true)
+                .putExtra(CardIOActivity.EXTRA_ENABLE_SCREEN_CAPTURE, true)
                 .putExtra(CardIOActivity.EXTRA_UI_CONFIG, UiConfigImpl.class);
 
         try {
